@@ -25,6 +25,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) removedProp: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -46,6 +48,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) owner: string;
           }
+
+          op getPet(): Pet;
         }
         `
       )
@@ -67,6 +71,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) nickname?: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -88,6 +94,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) deprecated: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -162,6 +170,46 @@ describe("no-property-removed", () => {
           model Container<T> {
             @removed(Versions.v2) legacyProp: string;
             data: T;
+          }
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  // ── Context-aware (input vs output) ──────────────────────────────────────
+
+  it("does not warn when a property is removed from a model used only as input", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
+          }
+
+          op createFoo(body: Foo): void;
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  it("does not warn when a property is removed from a model not used in any operation", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
           }
         }
         `

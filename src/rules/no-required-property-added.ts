@@ -1,6 +1,6 @@
 import { type Namespace, type Operation, createRule, paramMessage } from "@typespec/compiler";
 import { getVersion } from "@typespec/versioning";
-import { getVersionPairs, isProjectType, walkModels, walkOperations } from "../version-comparison.js";
+import { getModelUsage, getVersionPairs, isProjectType, walkModels, walkOperations } from "../version-comparison.js";
 
 export const noRequiredPropertyAddedRule = createRule({
   name: "no-required-property-added",
@@ -16,8 +16,11 @@ export const noRequiredPropertyAddedRule = createRule({
         if (!getVersion(context.program, ns)) return;
 
         for (const pair of getVersionPairs(context.program, ns)) {
+          const { inputModels } = getModelUsage(pair.currNs);
+
           walkModels(pair.currNs, (currModel) => {
             if (!isProjectType(context.program, currModel)) return;
+            if (!inputModels.has(currModel.name)) return; // Only breaking for input models.
 
             const prevModel = pair.prevNs.models.get(currModel.name);
             if (!prevModel) return; // New model entirely – out of scope for this rule.

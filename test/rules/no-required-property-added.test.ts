@@ -29,6 +29,8 @@ describe("no-required-property-added", () => {
             name: string;
             @added(Versions.v2) newRequired: string;
           }
+
+          op createFoo(body: Foo): void;
         }
         `
       )
@@ -50,6 +52,8 @@ describe("no-required-property-added", () => {
             id: string;
             @added(Versions.v2) count: int32;
           }
+
+          op createFoo(body: Foo): void;
         }
         `
       )
@@ -203,6 +207,46 @@ describe("no-required-property-added", () => {
         code: "typespec-breaking-change-detector/no-required-property-added",
         message: /b.*v1.*v2/,
       });
+  });
+
+  // ── Context-aware (input vs output) ──────────────────────────────────────
+
+  it("does not warn when a required property is added to a model used only as output", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @added(Versions.v2) newRequired: string;
+          }
+
+          op getFoo(): Foo;
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  it("does not warn when a required property is added to a model not used in any operation", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @added(Versions.v2) newRequired: string;
+          }
+        }
+        `
+      )
+      .toBeValid();
   });
 
 });
