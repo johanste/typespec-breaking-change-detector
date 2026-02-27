@@ -26,8 +26,12 @@ export const noRequiredPropertyAddedRule = createRule({
             if (!prevModel) return; // New model entirely – out of scope for this rule.
 
             for (const [propName, currProp] of currModel.properties) {
+              const prevProp = prevModel.properties.get(propName);
+              const isNewProperty = !prevProp;
+              const isMadeRequired = prevProp !== undefined && prevProp.optional === true && !currProp.optional;
+
               if (
-                !prevModel.properties.has(propName) &&
+                (isNewProperty || isMadeRequired) &&
                 !currProp.optional &&
                 currProp.defaultValue === undefined
               ) {

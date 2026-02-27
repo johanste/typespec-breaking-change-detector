@@ -216,4 +216,90 @@ describe("no-property-removed", () => {
       )
       .toBeValid();
   });
+
+  // ── Nested models ─────────────────────────────────────────────────────────
+
+  it("warns when a property is removed from a nested output model", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Address {
+            street: string;
+            @removed(Versions.v2) city: string;
+          }
+
+          model Person {
+            name: string;
+            address: Address;
+          }
+
+          op getPerson(): Person;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /city/,
+      });
+  });
+
+  // ── Models used in multiple operations ───────────────────────────────────
+
+  it("warns when property removed from model used as both input and output", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
+          }
+
+          op createFoo(body: Foo): void;
+          op getFoo(): Foo;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /removedProp/,
+      });
+  });
+
+  // ── Union return types ────────────────────────────────────────────────────
+
+  it("warns when a property is removed from a model in a union return type", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Dog {
+            kind: "dog";
+            @removed(Versions.v2) breed: string;
+          }
+
+          model Cat {
+            kind: "cat";
+          }
+
+          op getPet(): Dog | Cat;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /breed/,
+      });
+  });
+
 });

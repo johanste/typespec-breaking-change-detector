@@ -116,4 +116,66 @@ describe("no-property-type-changed", () => {
       )
       .toBeValid();
   });
+
+  // ── Integer bit-ness ──────────────────────────────────────────────────────
+
+  it("warns when an integer property changes from int32 to int64 (widened type)", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            @typeChangedFrom(Versions.v2, int32) count: int64;
+          }
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-type-changed",
+        message: /count.*int32.*int64/,
+      });
+  });
+
+  it("warns when an integer property changes from int64 to int32 (narrowed type)", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            @typeChangedFrom(Versions.v2, int64) count: int32;
+          }
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-type-changed",
+        message: /count.*int64.*int32/,
+      });
+  });
+
+  it("warns when a float32 property changes to float64", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Measurement {
+            @typeChangedFrom(Versions.v2, float32) value: float64;
+          }
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-type-changed",
+        message: /value.*float32.*float64/,
+      });
+  });
 });
