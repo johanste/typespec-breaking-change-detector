@@ -1,0 +1,43 @@
+{
+  "name": "typespec-breaking-change-detector",
+  "version": "0.1.0",
+  "description": "TypeSpec linter library that warns about breaking changes between API versions",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./testing": {
+      "types": "./dist/src/testing/index.d.ts",
+      "default": "./dist/src/testing/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist/**",
+    "!dist/test/**"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest -w",
+    "clean": "rimraf ./dist"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": "^1.9.0",
+    "@typespec/versioning": "^0.79.0"
+  },
+  "devDependencies": {
+    "@types/node": "~22.0.0",
+    "@typespec/compiler": "^1.9.0",
+    "@typespec/versioning": "^0.79.0",
+    "rimraf": "~6.0.0",
+    "typescript": "~5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
