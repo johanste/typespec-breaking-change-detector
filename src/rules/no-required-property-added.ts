@@ -1,6 +1,6 @@
-import { type Namespace, createRule, paramMessage } from "@typespec/compiler";
+import { type Namespace, type Operation, createRule, paramMessage } from "@typespec/compiler";
 import { getVersion } from "@typespec/versioning";
-import { getVersionPairs, isProjectType, walkModels } from "../version-comparison.js";
+import { getVersionPairs, isProjectType, walkModels, walkOperations } from "../version-comparison.js";
 
 export const noRequiredPropertyAddedRule = createRule({
   name: "no-required-property-added",
@@ -32,6 +32,38 @@ export const noRequiredPropertyAddedRule = createRule({
                   target: currProp,
                   format: {
                     propName,
+                    prevVersion: pair.prevVersion.name,
+                    currVersion: pair.currVersion.name,
+                  },
+                });
+              }
+            }
+          });
+
+          walkOperations(pair.currNs, (currOp: Operation, currIface) => {
+            if (!isProjectType(context.program, currOp)) return;
+
+            // Find the matching operation in the previous version.
+            let prevOp: Operation | undefined;
+            if (currIface) {
+              const prevIface = pair.prevNs.interfaces.get(currIface.name);
+              prevOp = prevIface?.operations.get(currOp.name);
+            } else {
+              prevOp = pair.prevNs.operations.get(currOp.name);
+            }
+            if (!prevOp) return; // New operation – not this rule's concern.
+
+            // Check for required parameters added between versions.
+            for (const [paramName, currParam] of currOp.parameters.properties) {
+              if (
+                !prevOp.parameters.properties.has(paramName) &&
+                !currParam.optional &&
+                currParam.defaultValue === undefined
+              ) {
+                context.reportDiagnostic({
+                  target: currParam,
+                  format: {
+                    propName: paramName,
                     prevVersion: pair.prevVersion.name,
                     currVersion: pair.currVersion.name,
                   },

@@ -134,4 +134,75 @@ describe("no-required-property-added", () => {
       )
       .toBeValid();
   });
+
+  // ── Operation parameters ──────────────────────────────────────────────────
+
+  it("warns when a required parameter is added to an operation in a new version", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          op doStuff(a: string, @added(Versions.v2) b: string): void;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-required-property-added",
+        message: /b.*v1.*v2/,
+      });
+  });
+
+  it("does not warn when an optional parameter is added to an operation", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          op doStuff(a: string, @added(Versions.v2) b?: string): void;
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  it("does not warn when a required parameter exists in both versions", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          op doStuff(a: string): void;
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  it("warns when a required parameter is added to an interface operation in a new version", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          interface Ops {
+            doStuff(a: string, @added(Versions.v2) b: string): void;
+          }
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-required-property-added",
+        message: /b.*v1.*v2/,
+      });
+  });
+
 });
