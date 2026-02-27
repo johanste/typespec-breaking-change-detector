@@ -25,6 +25,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) removedProp: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -46,6 +48,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) owner: string;
           }
+
+          op getPet(): Pet;
         }
         `
       )
@@ -67,6 +71,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) nickname?: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -88,6 +94,8 @@ describe("no-property-removed", () => {
             name: string;
             @removed(Versions.v2) deprecated: string;
           }
+
+          op getFoo(): Foo;
         }
         `
       )
@@ -168,4 +176,130 @@ describe("no-property-removed", () => {
       )
       .toBeValid();
   });
+
+  // ── Context-aware (input vs output) ──────────────────────────────────────
+
+  it("does not warn when a property is removed from a model used only as input", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
+          }
+
+          op createFoo(body: Foo): void;
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  it("does not warn when a property is removed from a model not used in any operation", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
+          }
+        }
+        `
+      )
+      .toBeValid();
+  });
+
+  // ── Nested models ─────────────────────────────────────────────────────────
+
+  it("warns when a property is removed from a nested output model", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Address {
+            street: string;
+            @removed(Versions.v2) city: string;
+          }
+
+          model Person {
+            name: string;
+            address: Address;
+          }
+
+          op getPerson(): Person;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /city/,
+      });
+  });
+
+  // ── Models used in multiple operations ───────────────────────────────────
+
+  it("warns when property removed from model used as both input and output", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Foo {
+            name: string;
+            @removed(Versions.v2) removedProp: string;
+          }
+
+          op createFoo(body: Foo): void;
+          op getFoo(): Foo;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /removedProp/,
+      });
+  });
+
+  // ── Union return types ────────────────────────────────────────────────────
+
+  it("warns when a property is removed from a model in a union return type", async () => {
+    await tester
+      .expect(
+        `
+        @versioned(Versions)
+        namespace MyService {
+          enum Versions { v1, v2 }
+
+          model Dog {
+            kind: "dog";
+            @removed(Versions.v2) breed: string;
+          }
+
+          model Cat {
+            kind: "cat";
+          }
+
+          op getPet(): Dog | Cat;
+        }
+        `
+      )
+      .toEmitDiagnostics({
+        code: "typespec-breaking-change-detector/no-property-removed",
+        message: /breed/,
+      });
+  });
+
 });

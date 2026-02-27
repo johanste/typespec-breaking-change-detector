@@ -6,6 +6,7 @@ import {
   type Operation,
   type Program,
   type Type,
+  type Union,
   getLocationContext,
   getTypeName,
   isTemplateDeclaration,
@@ -141,4 +142,52 @@ export function findOperationInNs(ns: Namespace, name: string): Operation | unde
  */
 export function typeId(type: Type): string {
   return getTypeName(type);
+}
+
+/**
+ * Recursively collects all named model names reachable from `type`.
+ * Handles Model (including source models from spreads/is) and Union types.
+ */
+function collectModelsFromType(type: Type, names: Set<string>, visited = new Set<string>()): void {
+  if (type.kind === "Model") {
+    const model = type as Model;
+    if (model.name && !visited.has(model.name)) {
+      names.add(model.name);
+      visited.add(model.name);
+      for (const prop of model.properties.values()) {
+        collectModelsFromType(prop.type, names, visited);
+      }
+      for (const src of model.sourceModels) {
+        collectModelsFromType(src.model, names, visited);
+      }
+    }
+  } else if (type.kind === "Union") {
+    for (const variant of (type as Union).variants.values()) {
+      collectModelsFromType(variant.type, names, visited);
+    }
+  }
+}
+
+/**
+ * Returns sets of model names that are used as inputs (operation parameters /
+ * request bodies) and outputs (operation return types) within `ns` and its
+ * descendant sub-namespaces.
+ */
+export function getModelUsage(ns: Namespace): { inputModels: Set<string>; outputModels: Set<string> } {
+  const inputModels = new Set<string>();
+  const outputModels = new Set<string>();
+  const inputVisited = new Set<string>();
+  const outputVisited = new Set<string>();
+
+  walkOperations(ns, (op) => {
+    for (const prop of op.parameters.properties.values()) {
+      collectModelsFromType(prop.type, inputModels, inputVisited);
+    }
+    for (const src of op.parameters.sourceModels) {
+      collectModelsFromType(src.model, inputModels, inputVisited);
+    }
+    collectModelsFromType(op.returnType, outputModels, outputVisited);
+  });
+
+  return { inputModels, outputModels };
 }

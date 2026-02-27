@@ -1,6 +1,6 @@
 import { type Namespace, createRule, paramMessage } from "@typespec/compiler";
 import { getVersion } from "@typespec/versioning";
-import { getVersionPairs, isProjectType, walkModels } from "../version-comparison.js";
+import { getModelUsage, getVersionPairs, isProjectType, walkModels } from "../version-comparison.js";
 
 export const noPropertyRemovedRule = createRule({
   name: "no-property-removed",
@@ -17,8 +17,11 @@ export const noPropertyRemovedRule = createRule({
         if (!getVersion(context.program, ns)) return;
 
         for (const pair of getVersionPairs(context.program, ns)) {
+          const { outputModels } = getModelUsage(pair.currNs);
+
           walkModels(pair.prevNs, (prevModel) => {
             if (!isProjectType(context.program, prevModel)) return;
+            if (!outputModels.has(prevModel.name)) return; // Only breaking for output models.
 
             const currModel = pair.currNs.models.get(prevModel.name);
             if (!currModel) return; // Whole model removed – out of scope for this rule.
