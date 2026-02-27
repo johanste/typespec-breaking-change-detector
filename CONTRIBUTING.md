@@ -2,7 +2,27 @@
 
 Thank you for your interest in contributing! This document explains how to clone, build, and test the project locally.
 
-## Prerequisites
+## Option A — Dev Container (recommended)
+
+The repository ships with a [Dev Container](https://containers.dev/) configuration (`.devcontainer/devcontainer.json`). This gives you a pre-configured environment with the correct Node.js version and all recommended VS Code extensions installed automatically.
+
+**Open in GitHub Codespaces**
+
+Click **Code → Codespaces → Create codespace on `main`** in the GitHub UI, or use the button below:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/johanste/typespec-breaking-change-detector)
+
+**Open locally in VS Code**
+
+1. Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension.
+2. Clone the repo and open the folder in VS Code.
+3. When prompted, click **Reopen in Container** (or run the **Dev Containers: Reopen in Container** command).
+
+In both cases `npm install` runs automatically and the environment is ready to use.
+
+## Option B — Local setup (without a container)
+
+### Prerequisites
 
 | Tool | Minimum version |
 |------|----------------|
