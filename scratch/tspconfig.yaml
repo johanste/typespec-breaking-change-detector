@@ -1,0 +1,3 @@
+linter:
+  extends:
+    - typespec-breaking-change-detector/all

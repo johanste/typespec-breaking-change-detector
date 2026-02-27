@@ -1,0 +1,7 @@
+# Ignore everything in this folder so that scratch .tsp files are never
+# accidentally committed.  The config files below are explicitly re-included.
+*
+!.gitignore
+!package.json
+!tspconfig.yaml
+!README.md

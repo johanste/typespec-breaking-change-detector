@@ -1,0 +1,9 @@
+{
+  "name": "scratch",
+  "private": true,
+  "dependencies": {
+    "@typespec/compiler": "^1.9.0",
+    "@typespec/versioning": "^0.79.0",
+    "typespec-breaking-change-detector": "file:.."
+  }
+}
