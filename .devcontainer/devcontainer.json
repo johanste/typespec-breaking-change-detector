@@ -1,7 +1,7 @@
 {
   "name": "typespec-breaking-change-detector",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20",
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm install && npm run build && cd scratch && npm install",
   "customizations": {
     "vscode": {
       "extensions": [
